@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Document</title>
+
+    <!-- 引入打包后的文件 -->
+    <script src="../../packages/vue/dist/vue.global.js"></script>
+  </head>
+  <body>
+    <!-- vue 挂载节点 -->
+    <div id="app">
+      <div>{{name}}</div>
+    </div>
+    <script>
+      // 解构需要使用的API
+      const { reactive, createApp, ref } = Vue
+
+      console.log(Vue.h('h1', {}, 'Hello Vue3js.cn'))
+
+      // 创建vue 应用
+      createApp({
+        setup() {
+          // 通过ref 生成响应式数据
+          const name = ref('张三')
+
+          // 两秒后修改响应式数据
+          setTimeout(() => {
+            name.value = '李四'
+          }, 2000)
+          return { name }
+        },
+      }).mount('#app')
+
+      const target = {
+        _id: '1024',
+        name: 'vuejs',
+      }
+
+      const validators = {
+        name(val) {
+          return typeof val === 'string'
+        },
+        _id(val) {
+          return typeof val === 'number' && val > 1024
+        },
+      }
+
+      const createValidator = (target, validator) => {
+        return new Proxy(target, {
+          _validator: validator,
+          set(target, propkey, value, proxy) {
+            let validator = this._validator[propkey](value)
+            if (validator) {
+              return Reflect.set(target, propkey, value, proxy)
+            } else {
+              throw Error(`Cannot set ${propkey} to ${value}. Invalid type.`)
+            }
+          },
+        })
+      }
+
+      const proxy = createValidator(target, validators)
+     
+
+      proxy.name = 'vue-js.com' // vue-js.com
+      proxy.name = 10086 // Uncaught Error: Cannot set name to 10086. Invalid type.
+      proxy._id = 1025 // 1025
+      proxy._id = 22 // Uncaught Error: Cannot set _id to 22. Invalid type
+      console.log(2222, proxy, target) // Proxy 代理会修改目标对象
+    </script>
+  </body>
+</html>
